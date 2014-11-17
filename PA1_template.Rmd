@@ -1,25 +1,97 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PA1_template"
+output: html_document
 ---
+##Loading and preprocessing the data
+The first step here will be to load the sample data set.
+
+```{r, ECHO = TRUE}
+download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip", "data.zip", "curl")
+unzip("data.zip")
+fitnessData <- read.csv("./activity.csv")
+```
+
+##What is mean total number of steps taken per day?
+Now that we have the data, we're going to do some calculations.
+
+First, I'll sum up the number of steps for each day. 
+Then we'll look at the mean and the median of that data set.
+After that, we'll plot the total steps per day by summing steps over our data set, split by day.
 
 
-## Loading and preprocessing the data
+```{r, ECHO = TRUE}
+stepsPerDay <- tapply(fitnessData$steps, fitnessData$date, FUN=sum)
+mean <- mean(stepsPerDay, na.rm = TRUE)
+mean
+median <- median(stepsPerDay, na.rm = TRUE)
+median
+plot(stepsPerDay)
+```
+
+##What is the average daily activity pattern?
+
+OK, now we want to look at a normal distribution of activity over the course of a day.
+We do that by splitting on interval and then looking at that data.
+First, we plot it in a line graph, and then we look for the interval with the max mean steps.
+
+```{r, ECHO = TRUE}
+stepsPerInterval <- tapply(fitnessData$steps, fitnessData$interval, FUN=mean, na.rm=TRUE)
+plot(stepsPerInterval, type = "l")
+maxMeanInterval <- names(stepsPerInterval)[stepsPerInterval == max(stepsPerInterval)]
+maxMeanInterval
+```
+
+##Imputing missing values
+Taking these one step at a time:
+1. Calculate and report the total number of missing values in the 
+dataset (i.e. the total number of rows with NAs)
+
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 
+For step 1:
+```{r, echo = TRUE}
+rowsWithNAs <- fitnessData[is.na(fitnessData),]
+nrow(rowsWithNAs)
+```
 
-## What is mean total number of steps taken per day?
+For step 2 and 3, I'm using zeroes instead of means just to experiment with the impact.
+```{r, echo = TRUE}
+fitnessDataZeros <- fitnessData
+fitnessDataZeros[is.na(fitnessDataZeros),]$steps = 0
+```
 
+For step 4, we plot:
+```{r, echo = TRUE}
+stepsPerDayNew <- tapply(fitnessDataZeros$steps, fitnessDataZeros$date, FUN=sum)
+mean <- mean(stepsPerDayNew, na.rm = TRUE)
+mean
+median <- median(stepsPerDayNew, na.rm = TRUE)
+median
+plot(stepsPerDayNew)
+```
 
+##Are there differences in activity patterns between weekdays and weekends?
 
-## What is the average daily activity pattern?
+For this case, we'll look at the new data set and we'll need a new function to take care 
+of determining whether the date is a weekend or weekday.
 
+```{r, echo = TRUE}
+dayChecker <- function(x) {
+  dayType <- "Weekday"
+  dayName <- weekdays(as.Date(x))
+  if (dayName == "Saturday") { dayType <- "Weekend" }
+  else if (dayName == "Sunday") { dayType <- "Weekend" }
+  dayType
+}
 
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+stepsPerWeekday <- tapply(fitnessDataZeros$steps, weekdays(as.Date(fitnessDataZeros$date)), FUN=sum)
+mean <- mean(stepsPerWeekday, na.rm = TRUE)
+mean
+median <- median(stepsPerWeekday, na.rm = TRUE)
+median
+plot(stepsPerWeekday, stepsPerWeekday)
